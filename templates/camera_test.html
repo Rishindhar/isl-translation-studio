@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Test</title>
+    <style>
+        body { background: #111; color: #fff; font-family: Arial; text-align: center; padding: 20px; }
+        #status { font-size: 20px; margin: 20px 0; padding: 15px; border-radius: 8px; }
+        .ok { background: #064e3b; border: 2px solid #10b981; }
+        .err { background: #450a0a; border: 2px solid #ef4444; }
+        .waiting { background: #1e293b; border: 2px solid #3b82f6; }
+        video { width: 640px; height: 480px; background: #000; border: 3px solid #22c55e; border-radius: 12px; }
+        button { font-size: 20px; padding: 15px 40px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .start { background: #22c55e; color: #000; }
+        .stop { background: #ef4444; color: #fff; }
+    </style>
+</head>
+<body>
+    <h1>🎥 ISL Webcam Test Page</h1>
+    <div id="status" class="waiting">Click "Start Camera" to test your webcam</div>
+    
+    <div>
+        <button class="start" onclick="startCam()">▶️ START CAMERA</button>
+        <button class="stop" onclick="stopCam()">⏹️ STOP CAMERA</button>
+    </div>
+    
+    <br>
+    <video id="vid" autoplay muted playsinline></video>
+    
+    <div id="log" style="text-align:left; margin-top:20px; padding:10px; background:#1e293b; border-radius:8px; font-size:13px; max-height:200px; overflow:auto;"></div>
+
+    <script>
+        let stream = null;
+        const vid = document.getElementById('vid');
+        const statusEl = document.getElementById('status');
+        const logEl = document.getElementById('log');
+
+        function log(msg) {
+            const t = new Date().toLocaleTimeString();
+            logEl.innerHTML += '<div>[' + t + '] ' + msg + '</div>';
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(msg);
+        }
+
+        async function startCam() {
+            statusEl.className = 'waiting';
+            statusEl.innerText = 'Requesting camera access...';
+            log('Calling navigator.mediaDevices.getUserMedia...');
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480 },
+                    audio: false
+                });
+                log('Got camera stream! Tracks: ' + stream.getTracks().map(function(t){ return t.label; }).join(', '));
+
+                vid.srcObject = stream;
+                vid.onloadedmetadata = function() {
+                    log('Video metadata loaded: ' + vid.videoWidth + 'x' + vid.videoHeight);
+                    statusEl.className = 'ok';
+                    statusEl.innerText = 'CAMERA WORKING! You should see your face below. Size: ' + vid.videoWidth + 'x' + vid.videoHeight;
+                };
+                vid.onplaying = function() { log('Video is playing!'); };
+                
+                await vid.play();
+                log('vid.play() succeeded');
+
+            } catch (err) {
+                log('ERROR: ' + err.name + ': ' + err.message);
+                statusEl.className = 'err';
+                statusEl.innerText = 'FAILED: ' + err.name + ' - ' + err.message;
+                
+                if (err.name === 'NotAllowedError') {
+                    statusEl.innerText += ' - You need to ALLOW camera permission! Click the camera icon in the address bar.';
+                } else if (err.name === 'NotFoundError') {
+                    statusEl.innerText += ' - No camera found on this device.';
+                } else if (err.name === 'NotReadableError') {
+                    statusEl.innerText += ' - Camera is being used by another app. Close other apps using the camera.';
+                }
+            }
+        }
+
+        function stopCam() {
+            if (stream) {
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                stream = null;
+                vid.srcObject = null;
+                log('Camera stopped.');
+                statusEl.className = 'waiting';
+                statusEl.innerText = 'Camera stopped. Click Start to try again.';
+            }
+        }
+
+        // List available devices
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            navigator.mediaDevices.enumerateDevices().then(function(devices) {
+                var cams = devices.filter(function(d) { return d.kind === 'videoinput'; });
+                log('Found ' + cams.length + ' camera device(s):');
+                cams.forEach(function(c, i) { log('  Camera ' + i + ': ' + (c.label || 'unnamed device')); });
+            });
+        }
+    </script>
+</body>
+</html>

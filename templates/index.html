@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Sign Language (ISL) Full-Stack AI Translation Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="logo-icon">🤟</div>
+                <div class="brand-text">
+                    <h1>ISL AI Translation Studio</h1>
+                    <p>Real-Time Indian Sign Language Recognition, Subtitles & Voice Synthesis</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation Links -->
+            <nav class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('videoTab')">🎬 Pre-recorded Video</button>
+                <button class="tab-btn" onclick="switchTab('liveTab')">📹 Live Camera</button>
+                <button class="tab-btn" onclick="switchTab('learnTab')">⚡ Custom Sign Learner</button>
+                <button class="tab-btn" onclick="switchTab('manageTab')">⚙️ Manage Signs</button>
+            </nav>
+        </header>
+
+        <!-- TAB 1: INTERACTIVE VIDEO TRANSLATOR WORKBENCH -->
+        <div id="videoTab" class="tab-content active">
+            <main class="main-grid">
+                <!-- Left Panel: Video Selection, Upload & Original Preview -->
+                <section class="card config-card">
+                    <div class="card-header">
+                        <h2>1. Select or Upload ISL Video</h2>
+                    </div>
+
+                    <!-- Dropzone File Upload -->
+                    <div class="dropzone" onclick="triggerFileInput()">
+                        <div class="dropzone-icon">📤</div>
+                        <div class="dropzone-text">
+                            <span class="primary-text">Click to upload or drag & drop video file</span>
+                            <span class="sub-text">Supports .mp4, .avi, .mov (WhatsApp, Webcam, Recorded)</span>
+                        </div>
+                        <input type="file" id="videoFileInput" accept="video/*" style="display:none;" onchange="handleFileUpload(event)">
+                    </div>
+
+                    <div class="divider"><span>OR CHOOSE SAVED SAMPLE VIDEO</span></div>
+
+                    <select id="sampleVideoSelect" onchange="selectSampleVideo(this.value)">
+                        <option value="">-- Choose Sample Video --</option>
+                    </select>
+
+                    <div id="uploadStatusText" class="status-info"></div>
+
+                    <!-- Original Input Video Preview Player -->
+                    <div class="preview-box">
+                        <span class="box-title">Original Input Video Preview:</span>
+                        <video id="inputVideoPreview" controls preload="auto" style="display: none;"></video>
+                        <div id="previewPlaceholder" class="placeholder-box">
+                            <span>No video selected. Upload or choose a video to preview.</span>
+                        </div>
+                    </div>
+
+                    <!-- Speech & Translation Language Settings -->
+                    <div class="settings-group">
+                        <label class="input-label">Select Translation & Audio Voice Language:</label>
+                        <select id="videoLangSelect" class="full-width-select">
+                            <option value="en">🌐 English Translation & Audio Speech</option>
+                            <option value="hi">🌐 Hindi Translation & Audio Speech (हिन्दी)</option>
+                        </select>
+                    </div>
+
+                    <!-- PROMINENT PROCEED & TRANSLATE BUTTON -->
+                    <div class="action-box">
+                        <button id="processBtn" class="btn btn-proceed" onclick="proceedAndTranslateVideo()">
+                            <span class="btn-icon">▶️</span>
+                            <span class="btn-text">PROCEED & TRANSLATE VIDEO</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Right Panel: Translated Output Stream & Multilingual Translation Cards -->
+                <section class="card player-card">
+                    <div class="card-header">
+                        <h2>2. Translated Output & Multilingual Speech</h2>
+                    </div>
+
+                    <!-- Processed Stream Output Video Player -->
+                    <div class="stream-player-container">
+                        <div class="video-wrapper">
+                            <img id="translatedStreamPlayer" src="" alt="Translated Stream Output" style="display:none;">
+                            <div id="streamPlaceholder" class="player-placeholder">
+                                <div class="placeholder-content">
+                                    <div class="placeholder-icon">🎬</div>
+                                    <span>Upload an ISL video & click <strong>"Proceed & Translate Video"</strong> to generate translation</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Completion Banner (shown when video ends) -->
+                    <div id="videoCompleteBanner" class="complete-banner" style="display:none;">
+                        <div class="complete-icon">✅</div>
+                        <div class="complete-text">
+                            <div class="complete-title">Video Processing Complete!</div>
+                            <div class="complete-lang">Language: <span id="completeLang">English</span></div>
+                            <div class="complete-summary" id="completeSummaryText">Loading results...</div>
+                        </div>
+                        <div class="complete-audio-note">🔊 Auto-playing full sentence audio...</div>
+                    </div>
+
+                    <!-- Vocabulary Warning Banner -->
+                    <div id="vocabWarningBanner" class="warn-banner" style="display:none;">
+                        <div class="warn-icon">⚠️</div>
+                        <div class="warn-text">
+                            <div class="warn-title">Sign Not in Current Vocabulary</div>
+                            <div class="warn-detail">The model is currently trained on <strong id="warnVocabCount">1,025</strong> vocabulary signs.<br>
+                            <span id="warnVocabDetail">Includes: hello, thank_you, yes, no, help, idle, and 1,019 other gestures.</span><br>
+                            Videos with other ISL signs need model retraining with that gesture's data.
+                            Use <em>Custom Sign Learner</em> to add new gestures.</div>
+                        </div>
+                    </div>
+
+                    <!-- Multilingual Translation Display Cards -->
+                    <div class="translation-display-grid">
+                        <div class="trans-card en-card">
+                            <div class="card-label">🇬🇧 English Translation:</div>
+                            <div class="card-val" id="transTextEN">Waiting for gesture...</div>
+                            <button class="btn btn-audio" onclick="playAudio('en')">🔊 Play English Voice</button>
+                        </div>
+                        <div class="trans-card hi-card">
+                            <div class="card-label">🇮🇳 Hindi Translation (हिन्दी):</div>
+                            <div class="card-val" id="transTextHI">इंतजार कर रहा हूं...</div>
+                            <button class="btn btn-audio" onclick="playAudio('hi')">🔊 Play Hindi Voice</button>
+                        </div>
+                    </div>
+
+                    <!-- Continuous Sentence Log -->
+                    <div class="sentence-log-box">
+                        <span class="log-title">Continuous Recognized Sentence Log:</span>
+                        <div class="sentence-box" id="sentenceBox">
+                            <span class="placeholder-text">Recognized ISL signs will append here continuously...</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- TAB 2: REAL-TIME LIVE WEBCAM TRANSLATION -->
+        <div id="liveTab" class="tab-content">
+            <main class="main-grid">
+                <!-- Left: Live Camera Panel -->
+                <section class="card stream-card">
+                    <div class="card-header">
+                        <h2>📹 Live Webcam ISL Recognition</h2>
+                        <div class="camera-controls">
+                            <button id="startCamBtn" class="btn btn-proceed" onclick="startWebcam()">▶️ Start Camera</button>
+                            <button id="stopCamBtn" class="btn btn-secondary" onclick="stopWebcam()" style="display:none;">⏹️ Stop Camera</button>
+                        </div>
+                    </div>
+
+                    <!-- Camera + Canvas overlay wrapper -->
+                    <div class="cam-container" id="camContainer">
+                        <!-- Placeholder shown before camera starts -->
+                        <div id="webcamPlaceholder" class="player-placeholder">
+                            <div class="placeholder-content">
+                                <div class="placeholder-icon">📹</div>
+                                <span>Click <strong>"▶️ Start Camera"</strong> to open your webcam and start recognizing ISL hand signs live!</span>
+                                <button class="btn btn-proceed" style="margin-top:16px;" onclick="startWebcam()">▶️ Open Camera Now</button>
+                            </div>
+                        </div>
+
+                        <!-- Actual webcam video - browser native feed (GUARANTEED to show your camera) -->
+                        <video id="webcamVideo" autoplay muted playsinline style="display:none;"></video>
+                        <!-- Hidden canvas used to capture frames for server processing -->
+                        <canvas id="captureCanvas" style="display:none;"></canvas>
+                        <!-- Visible canvas overlay with hand tracking annotations drawn on top -->
+                        <canvas id="overlayCanvas" style="display:none;"></canvas>
+
+                        <!-- HUD overlay badges -->
+                        <div class="hud-overlay" id="hudOverlay" style="display:none;">
+                            <div class="prediction-pill" id="livePredPill">
+                                <span class="label-title">Gesture:</span>
+                                <span class="label-value" id="livePredLabel">IDLE</span>
+                            </div>
+                            <div class="confidence-container">
+                                <div class="conf-text">Confidence: <span id="liveConfVal">0.0%</span></div>
+                                <div class="meter-bar">
+                                    <div class="meter-fill" id="liveMeterFill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right: Live Translation -->
+                <section class="card translation-card">
+                    <div class="card-header">
+                        <h2>Live Translation</h2>
+                        <div class="header-actions">
+                            <select id="liveLangSelect" onchange="changeLanguage(this.value)">
+                                <option value="en">🌐 English</option>
+                                <option value="hi">🌐 Hindi (हिन्दी)</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="resetSentence()">🗑️ Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- Live translation cards -->
+                    <div class="translation-display-grid" style="margin-bottom:12px;">
+                        <div class="trans-card en-card">
+                            <div class="card-label">🇬🇧 English:</div>
+                            <div class="card-val" id="liveTransEN">Waiting for gesture...</div>
+                        </div>
+                        <div class="trans-card hi-card">
+                            <div class="card-label">🇮🇳 Hindi:</div>
+                            <div class="card-val" id="liveTransHI">इंतजार कर रहा हूं...</div>
+                        </div>
+                    </div>
+
+                    <!-- In-progress word chips -->
+                    <div class="section-label" style="margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">
+                        🔡 Current sentence being signed:
+                    </div>
+                    <div class="sentence-box" id="liveSentenceBox">
+                        <span class="placeholder-text">Perform ISL hand signs in front of camera...</span>
+                    </div>
+
+                    <!-- LM Next-word hints (shown when signs are being performed) -->
+                    <div id="lmNextHints" class="lm-hint-bar" style="display:none;"></div>
+
+                    <!-- ✅ COMPLETED SENTENCE BANNER — shown after pause detection -->
+                    <div id="liveCompletedBanner" class="completed-sentence-banner" style="display:none;">
+                        <div class="completed-banner-header">
+                            <span class="completed-icon">✅</span>
+                            <span>Sentence Complete!</span>
+                            <button class="btn-close-banner" onclick="document.getElementById('liveCompletedBanner').style.display='none'">✕</button>
+                        </div>
+                        <div class="completed-words-row" id="liveCompletedWords"></div>
+                        <div class="completed-text-en" id="liveCompletedEN"></div>
+                        <div class="completed-text-hi" id="liveCompletedHI"></div>
+                        <div class="completed-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="speakInBrowser(document.getElementById('liveCompletedEN').innerText,'en')">🔊 Speak EN</button>
+                            <button class="btn btn-secondary btn-sm" onclick="speakInBrowser(document.getElementById('liveCompletedHI').innerText,'hi')">🔊 बोलें</button>
+                        </div>
+                    </div>
+
+                    <!-- Sentence History -->
+                    <div class="sentence-history-section">
+                        <div class="section-label" style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">
+                            📜 Sentence History:
+                        </div>
+                        <div id="sentenceHistoryPanel" class="sentence-history-panel">
+                            <span class="placeholder-text" style="font-size:0.8rem;">Completed sentences will appear here...</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- TAB 3: DEDICATED CUSTOM SIGN LEARNER -->
+        <div id="learnTab" class="tab-content">
+            <main class="main-grid">
+                <!-- Left: Custom Camera Recording Interface -->
+                <section class="card stream-card">
+                    <div class="card-header">
+                        <h2>⚡ Teach the AI a New Gesture</h2>
+                        <div class="camera-controls">
+                            <button id="learnStartCamBtn" class="btn btn-proceed" onclick="startWebcam()">▶️ Open Camera</button>
+                            <button id="learnStopCamBtn" class="btn btn-secondary" onclick="stopWebcam()" style="display:none;">⏹️ Close Camera</button>
+                        </div>
+                    </div>
+
+                    <div class="cam-container" id="learnCamContainer">
+                        <div id="learnWebcamPlaceholder" class="player-placeholder">
+                            <div class="placeholder-content">
+                                <div class="placeholder-icon">⚡</div>
+                                <span>Webcam preview is required to record custom gestures. Click <strong>"▶️ Open Camera"</strong> to start.</span>
+                                <button class="btn btn-proceed" style="margin-top:16px;" onclick="startWebcam()">▶️ Open Camera Now</button>
+                            </div>
+                        </div>
+
+                        <!-- We share the same video and canvas elements for seamless visual display -->
+                        <video id="learnWebcamVideo" autoplay muted playsinline style="display:none; width:100%; height:100%; object-fit:cover; border-radius: var(--radius-md); transform: scaleX(-1);"></video>
+                    </div>
+                </section>
+
+                <!-- Right: Custom learning trigger panel -->
+                <section class="card translation-card">
+                    <div class="card-header">
+                        <h2>Gesture Definition & Train</h2>
+                    </div>
+
+                    <div class="custom-learner-card" style="margin-top:0;">
+                        <h3>Configure New Gesture Label</h3>
+                        <p class="learner-sub">Type a short, descriptive name for the hand sign you want to teach the model:</p>
+                        
+                        <div class="settings-group">
+                            <label class="input-label">Gesture Name (use letters and numbers):</label>
+                            <input type="text" id="customSignInput" placeholder="e.g. namaste, my_name, thank_you, water" style="width: 100%; box-sizing: border-box; background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 12px; border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 14px;">
+                        </div>
+
+                        <button class="btn btn-accent" onclick="recordWebcamSign()" style="width: 100%; padding: 14px; font-size: 15px; border-radius: var(--radius-sm);">
+                            🔴 Record &amp; Learn Custom Sign (30 Frames)
+                        </button>
+
+                        <div id="customLearnStatus" class="status-info" style="margin-top:12px; font-weight:600;"></div>
+                    </div>
+
+                    <div class="info-box" style="background: rgba(30,41,59,0.3); border: 1px dashed rgba(148,163,184,0.3); padding: 16px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.6; color: var(--text-muted);">
+                        <h4>💡 How custom sign learning works:</h4>
+                        <ul style="margin: 8px 0 0 16px; padding: 0;">
+                            <li>Position yourself so your hands are clearly visible in the camera frame.</li>
+                            <li>Click the red <strong>Record &amp; Learn</strong> button.</li>
+                            <li>Wait for the 3-second OSD countdown to finish.</li>
+                            <li>Perform the gesture continuously while the capture progress reaches 100%.</li>
+                            <li>The model will fine-tune instantly using Transfer Learning!</li>
+                        </ul>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- TAB 4: DEDICATED CUSTOM SIGN MANAGER -->
+        <div id="manageTab" class="tab-content">
+            <main class="main-grid" style="grid-template-columns: 1fr;">
+                <section class="card translation-card" style="max-width: 600px; margin: 0 auto; width: 100%;">
+                    <div class="card-header">
+                        <h2>⚙️ Manage Custom Signs</h2>
+                    </div>
+
+                    <div class="custom-learner-card" style="margin-top:0;">
+                        <h3>Delete Custom Sign</h3>
+                        <p class="learner-sub">Type the exact label of the custom sign you want to remove from the model and disk.</p>
+
+                        <div class="settings-group">
+                            <label class="input-label">Enter Sign Label to Delete:</label>
+                            <input type="text" id="deleteSignInput" placeholder="e.g. hug, nice, above" style="width: 100%; box-sizing: border-box; background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 12px; border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 14px;">
+                        </div>
+
+                        <button onclick="deleteTypedCustomSign()" style="width: 100%; padding: 14px; font-size: 15px; border-radius: var(--radius-sm); background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #f87171; font-weight: bold; cursor: pointer;">
+                            ❌ Delete Sign from AI Model
+                        </button>
+                    </div>
+
+                    <div class="custom-learner-card" style="margin-top:20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                        <h3>Active Custom Signs</h3>
+                        <p class="learner-sub">These are the custom signs currently registered in your AI model. Click any to auto-fill the delete box:</p>
+
+                        <div id="manageCustomSignsList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 40px; align-items: center;">
+                            <span class="placeholder-text" style="font-size:0.8rem; color: var(--text-muted);">Loading custom signs...</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

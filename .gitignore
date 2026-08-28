@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+audio_cache/
+uploads/
+reports/
+kaggle_isl_data/
+data/
