@@ -286,11 +286,15 @@ def generate_video_file_stream(filename, lang="en"):
         if ok:
             classifier.load_model()
 
-    # Reset video_done flag at start
+    # Reset video_done flag, sentence builder, and system state at start
+    sentence_builder.reset()
     system_state["video_done"] = False
     system_state["video_sentence"] = []
     system_state["video_lang"] = lang
     system_state["sentence"] = []
+    system_state["completed_sentences"] = []
+    system_state["prediction"] = "idle"
+    system_state["confidence"] = 0.0
 
     cap = cv2.VideoCapture(file_path)
     seq_buf = collections.deque(maxlen=SEQUENCE_LENGTH)

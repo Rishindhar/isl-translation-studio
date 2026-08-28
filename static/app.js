@@ -367,6 +367,19 @@ function proceedAndTranslateVideo() {
     if (completeBanner) completeBanner.style.display = 'none';
     if (vocabWarning) vocabWarning.style.display = 'none';
 
+    // Clear DOM elements of previous translation
+    const textEnEl = document.getElementById('transTextEN');
+    const textHiEl = document.getElementById('transTextHI');
+    const sb = document.getElementById('sentenceBox');
+    const lb = document.getElementById('liveSentenceBox');
+    if (textEnEl) textEnEl.innerText = "Waiting for translation...";
+    if (textHiEl) textHiEl.innerText = "इंतजार...";
+    if (sb) sb.innerHTML = '<span class="placeholder-text" style="font-size:0.8rem;">Recognizing ISL gestures...</span>';
+    if (lb) lb.innerHTML = '<span class="placeholder-text" style="font-size:0.8rem;">Recognizing ISL gestures...</span>';
+    currentTranslationEN = "";
+    currentTranslationHI = "";
+    prevSentenceLen = 0;
+
     const streamUrl = `/video_stream_feed?filename=${encodeURIComponent(activeInputFilename)}&lang=${selectedLang}&t=${Date.now()}`;
     playerImg.src = streamUrl;
     playerImg.style.display = 'block';
