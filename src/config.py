@@ -42,7 +42,8 @@ DEFAULT_GESTURES = sorted(list(set(COMMON_WORDS + ALPHABETS + NUMBERS)))
 # Multilingual Text-to-Speech Settings
 SUPPORTED_LANGUAGES = {
     "en": "English",
-    "hi": "Hindi"
+    "hi": "Hindi",
+    "ta": "Tamil"
 }
 
 # Multilingual Translations mapping for all gestures

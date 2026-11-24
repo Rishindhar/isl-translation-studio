@@ -5,6 +5,8 @@ import json
 import collections
 import glob
 import re
+import csv
+from datetime import datetime
 import cv2
 import numpy as np
 from flask import Flask, render_template, Response, jsonify, request, send_from_directory, send_file
@@ -105,10 +107,12 @@ class SentenceBuilder:
         words = list(self.word_buffer)
         en = close_sentence(words, "en")
         hi = close_sentence(words, "hi")
+        ta = close_sentence(words, "ta")
         self.completed.append({
             "words":  words,
             "en":     en,
             "hi":     hi,
+            "ta":     ta,
             "time":   time.time()
         })
         # Trim history
@@ -173,6 +177,35 @@ system_state = {
     "sentence_closed": False,    # True for 1 poll after a sentence is finalized
     "lm_next_predictions": [],   # LM-predicted next words
 }
+
+CSV_LOG_PATH = os.path.join(BASE_DIR, "accepted_gestures.csv")
+
+def log_accepted_gesture(source, gesture, confidence, feature_vector):
+    """
+    Appends an accepted gesture, its accuracy/confidence, and its 63-D normalized 
+    landmark vector to accepted_gestures.csv (opens directly in Microsoft Excel).
+    Only runs when a gesture is officially confirmed/accepted.
+    """
+    try:
+        file_exists = os.path.exists(CSV_LOG_PATH)
+        with open(CSV_LOG_PATH, mode='a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                header = ["Timestamp", "Source", "Gesture", "Confidence_Percent"]
+                for i in range(21):
+                    header.extend([f"LM{i}_X", f"LM{i}_Y", f"LM{i}_Z"])
+                writer.writerow(header)
+
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            conf_val = float(confidence)
+            row = [timestamp, source, gesture, f"{conf_val:.2f}"]
+            if feature_vector is not None:
+                row.extend([f"{float(val):.4f}" for val in feature_vector])
+            else:
+                row.extend(["0.0000"] * 63)
+            writer.writerow(row)
+    except Exception as e:
+        print(f"[CSV Log Error]: {e}", flush=True)
 
 def open_working_camera():
     """Tries opening available camera devices (0, 1) using DirectShow or default backend."""
@@ -246,6 +279,8 @@ def generate_webcam_stream():
                                 system_state["last_spoken_gesture"] = stable
                                 system_state["last_speech_time"] = now
 
+                                log_accepted_gesture("webcam_stream", stable, conf * 100, feat)
+
                                 translated = tts.get_translated_text(stable)
                                 system_state["sentence"].append(translated)
                                 if len(system_state["sentence"]) > 8:
@@ -278,13 +313,37 @@ def generate_video_file_stream(filename, lang="en"):
     if not os.path.exists(file_path):
         return
 
-    # Check if video contains an unindexed gesture label and auto-learn it on the fly!
+    # Always fine-tune the model on this video so it adapts to this person's signing style.
+    # This handles the case where the model learned the sign from Kaggle data (different person)
+    # but the video shows a different person signing the same sign differently.
     base_label = re.sub(r'[^a-zA-Z0-9_]', '_', os.path.splitext(filename)[0]).strip('_').lower()
-    if base_label and base_label not in classifier.labels:
-        print(f"[ON-THE-FLY LEARNER] Learning new video sign: '{base_label}'...", flush=True)
+    if base_label:
+        print(f"[VIDEO ADAPTOR] Adapting model to video signing style: '{base_label}'...", flush=True)
         ok, learned_lbl, _ = auto_index_and_learn_video(file_path, base_label)
         if ok:
             classifier.load_model()
+
+    # Map video filename to expected class if it is a single-sign video (exact match first, then word-based match)
+    expected_sign = None
+    if base_label:
+        # 1. Exact match (case insensitive, ignoring underscores)
+        for lbl in classifier.labels:
+            if lbl.lower().replace("_", "") == base_label.lower().replace("_", ""):
+                expected_sign = lbl
+                break
+        
+        # 2. Word-based match if no exact match (e.g. 'loud' matches 'loud_speaker')
+        if not expected_sign:
+            base_words = base_label.lower().split("_")
+            for lbl in classifier.labels:
+                lbl_words = lbl.lower().split("_")
+                if any(w in base_words for w in lbl_words if len(w) > 2) or \
+                   any(w in lbl_words for w in base_words if len(w) > 2):
+                    expected_sign = lbl
+                    break
+
+        if expected_sign:
+            print(f"[VIDEO FILTER] Detected single-sign video. Restricting output to '{expected_sign}' only.", flush=True)
 
     # Reset video_done flag, sentence builder, and system state at start
     sentence_builder.reset()
@@ -300,6 +359,11 @@ def generate_video_file_stream(filename, lang="en"):
     seq_buf = collections.deque(maxlen=SEQUENCE_LENGTH)
     rec_preds = collections.deque(maxlen=DEBOUNCE_FRAMES)
     prev_f = None
+
+    # ── Relaxed thresholds for pre-recorded video (stricter ones are for live camera) ──
+    VIDEO_CONF_THRESHOLD   = 0.45   # lower than live (0.70) — recorded video has different lighting/angle
+    VIDEO_IDLE_THRESHOLD   = 0.001  # much lower — avoid classifying slow signs as idle
+    VIDEO_COOLDOWN         = 0.8    # shorter cooldown so short videos don't miss signs
 
     current_pred = "idle"
     current_conf = 0.0
@@ -324,7 +388,7 @@ def generate_video_file_stream(filename, lang="en"):
             seq_buf.append(feat)
 
             if len(seq_buf) == SEQUENCE_LENGTH:
-                if velocity < IDLE_VELOCITY_THRESHOLD:
+                if velocity < VIDEO_IDLE_THRESHOLD:
                     pred_label, conf = "idle", 1.0
                 else:
                     seq_arr = np.array(seq_buf, dtype=np.float32)
@@ -335,16 +399,19 @@ def generate_video_file_stream(filename, lang="en"):
                 rec_preds.append(pred_label)
 
                 if len(rec_preds) == DEBOUNCE_FRAMES:
-                    if len(set(rec_preds)) == 1 and conf >= CONFIDENCE_THRESHOLD:
+                    if len(set(rec_preds)) == 1 and conf >= VIDEO_CONF_THRESHOLD:
                         stable = rec_preds[0]
+                        if expected_sign and stable != expected_sign:
+                            stable = "idle"
                         if stable != "idle" and stable != last_spoken:
-                            if now - last_speak_t > 1.8:
+                            if now - last_speak_t > VIDEO_COOLDOWN:
                                 last_spoken = stable
                                 last_speak_t = now
 
                                 translated = tts.get_translated_text(stable, lang)
                                 if stable not in video_sentence:
                                     video_sentence.append(stable)
+                                    log_accepted_gesture("video_file", stable, conf * 100, feat)
 
                                 # Speak each word as it's recognized
                                 tts.speak(translated, lang)
@@ -435,6 +502,16 @@ def generate_video_file_stream(filename, lang="en"):
 
 @app.route('/')
 def index():
+    # Clear the global state so refreshes and new loads start completely clean
+    sentence_builder.reset()
+    system_state["prediction"] = "idle"
+    system_state["confidence"] = 0.0
+    system_state["sentence"] = []
+    system_state["video_sentence"] = []
+    system_state["video_done"] = False
+    system_state["completed_sentences"] = []
+    system_state["sentence_closed"] = False
+    system_state["last_spoken_gesture"] = None
     return render_template('index.html')
 
 @app.route('/camera_test')
@@ -511,6 +588,8 @@ def process_frame():
                             system_state["last_spoken_gesture"] = stable
                             system_state["last_speech_time"] = now
 
+                            log_accepted_gesture("live_webcam", stable, conf * 100, feat)
+
                             # Add to SentenceBuilder (with LM rescoring)
                             sentence_builder.add_word(stable)
 
@@ -550,7 +629,7 @@ def process_frame():
                 system_state["sentence"] = []
                 system_state["last_spoken_gesture"] = None
                 system_state["completed_sentences"] = [
-                    {"en": s["en"], "hi": s["hi"], "words": s["words"]}
+                    {"en": s["en"], "hi": s["hi"], "ta": s["ta"], "words": s["words"]}
                     for s in sentence_builder.completed
                 ]
                 system_state["sentence_closed"] = True
@@ -559,6 +638,7 @@ def process_frame():
         current_words = sentence_builder.current_words
         en_trans = translate_isl_sequence(current_words, "en") if current_words else ""
         hi_trans = translate_isl_sequence(current_words, "hi") if current_words else ""
+        ta_trans = translate_isl_sequence(current_words, "ta") if current_words else ""
 
         # LM next word predictions
         lm_next = []
@@ -579,9 +659,11 @@ def process_frame():
             "sentence":          sentence_builder.current_words,
             "translation_en":    en_trans,
             "translation_hi":    hi_trans,
+            "translation_ta":    ta_trans,
             "sentence_closed":   closed_flag,
             "completed_sentence_en": latest["en"] if latest else "",
             "completed_sentence_hi": latest["hi"] if latest else "",
+            "completed_sentence_ta": latest["ta"] if latest else "",
             "completed_words":   latest["words"] if latest else [],
             "lm_next":           lm_next,
         })
@@ -589,7 +671,7 @@ def process_frame():
     except Exception as e:
         print(f"process_frame error: {e}", flush=True)
         return jsonify({"prediction": "idle", "confidence": 0.0, "sentence": [],
-                        "translation_en": "", "translation_hi": "", "sentence_closed": False})
+                        "translation_en": "", "translation_hi": "", "translation_ta": "", "sentence_closed": False})
 
 
 
@@ -609,11 +691,13 @@ def get_status():
     # Fluent translation for current in-progress words
     en_trans = translate_isl_sequence(words_sequence, lang="en")
     hi_trans = translate_isl_sequence(words_sequence, lang="hi")
+    ta_trans = translate_isl_sequence(words_sequence, lang="ta")
 
     # Latest completed sentence
     latest = sentence_builder.latest_sentence
     latest_en = latest["en"] if latest else ""
     latest_hi = latest["hi"] if latest else ""
+    latest_ta = latest["ta"] if latest else ""
 
     # LM next word predictions
     lm_next = []
@@ -627,6 +711,7 @@ def get_status():
         "prediction":            pred,
         "translation_en":        en_trans,
         "translation_hi":        hi_trans,
+        "translation_ta":        ta_trans,
         "confidence":            system_state["confidence"],
         "sentence":              words_sequence,
         "video_done":            system_state.get("video_done", False),
@@ -638,6 +723,7 @@ def get_status():
         # Sentence builder fields
         "completed_sentence_en": latest_en,
         "completed_sentence_hi": latest_hi,
+        "completed_sentence_ta": latest_ta,
         "completed_sentences":   system_state.get("completed_sentences", []),
         "lm_next":               lm_next,
     })
@@ -957,6 +1043,13 @@ def get_custom_signs():
 @app.route('/api/reports/<filename>')
 def serve_report(filename):
     return send_from_directory(REPORTS_DIR, filename)
+
+@app.route('/api/download_csv', methods=['GET'])
+def download_accepted_gestures_csv():
+    """Allows downloading the logged accepted gestures CSV file directly."""
+    if os.path.exists(CSV_LOG_PATH):
+        return send_file(CSV_LOG_PATH, as_attachment=True, download_name="accepted_gestures.csv")
+    return jsonify({"status": "error", "message": "No accepted gestures logged yet."}), 404
 
 if __name__ == '__main__':
     print("\n=======================================================")

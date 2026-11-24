@@ -126,17 +126,31 @@
                         </div>
                     </div>
 
-                    <!-- Multilingual Translation Display Cards -->
-                    <div class="translation-display-grid">
-                        <div class="trans-card en-card">
+                    <!-- Multilingual Translation Display -->
+                    <div class="translation-section-wrapper" style="display: flex; flex-direction: column; gap: 14px; width: 100%;">
+                        <!-- Main English Translation Card (default) -->
+                        <div class="trans-card en-card" style="width: 100%;">
                             <div class="card-label">🇬🇧 English Translation:</div>
                             <div class="card-val" id="transTextEN">Waiting for gesture...</div>
-                            <button class="btn btn-audio" onclick="playAudio('en')">🔊 Play English Voice</button>
+                            <button class="btn btn-audio" onclick="playAudio('en')" style="margin-top: 6px; width: auto; font-size: 13px; padding: 6px 12px;">🔊 Play English Voice</button>
                         </div>
-                        <div class="trans-card hi-card">
-                            <div class="card-label">🇮🇳 Hindi Translation (हिन्दी):</div>
-                            <div class="card-val" id="transTextHI">इंतजार कर रहा हूं...</div>
-                            <button class="btn btn-audio" onclick="playAudio('hi')">🔊 Play Hindi Voice</button>
+
+                        <!-- Translate Selection Pill Buttons -->
+                        <div class="translation-selector-container" style="background: rgba(17, 24, 45, 0.5); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase;">Translate to:</span>
+                                <div class="lang-pill-group" id="videoPillGroup">
+                                    <button class="lang-pill" data-lang="hi" onclick="toggleVideoPill(this, 'hi')">🇮🇳 Hindi</button>
+                                    <button class="lang-pill" data-lang="ta" onclick="toggleVideoPill(this, 'ta')">🇮🇳 Tamil</button>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Translated Output (Hidden by default) -->
+                            <div id="videoDynamicTranslationBox" class="trans-card" style="display: none; border-top: 1px solid rgba(148,163,184,0.15); padding-top: 12px; margin-top: 4px;">
+                                <div class="card-label" id="videoDynamicLangLabel">Translated Output:</div>
+                                <div class="card-val" id="videoDynamicTransText" style="font-size: 1.4rem; color: #c4b5fd; font-weight: bold; margin-bottom: 8px;">—</div>
+                                <button id="videoDynamicSpeakBtn" class="btn btn-audio" style="width: auto; font-size: 13px; padding: 6px 14px;">🔊 Play Translated Voice</button>
+                            </div>
                         </div>
                     </div>
 
@@ -206,20 +220,37 @@
                             <select id="liveLangSelect" onchange="changeLanguage(this.value)">
                                 <option value="en">🌐 English</option>
                                 <option value="hi">🌐 Hindi (हिन्दी)</option>
+                                <option value="ta">🌐 Tamil (தமிழ்)</option>
                             </select>
                             <button class="btn btn-secondary" onclick="resetSentence()">🗑️ Reset</button>
                         </div>
                     </div>
 
                     <!-- Live translation cards -->
-                    <div class="translation-display-grid" style="margin-bottom:12px;">
-                        <div class="trans-card en-card">
-                            <div class="card-label">🇬🇧 English:</div>
+                    <div class="translation-section-wrapper" style="display: flex; flex-direction: column; gap: 14px; width: 100%; margin-bottom: 14px;">
+                        <!-- Main Live English Card (default) -->
+                        <div class="trans-card en-card" style="width: 100%;">
+                            <div class="card-label">🇬🇧 English Translation:</div>
                             <div class="card-val" id="liveTransEN">Waiting for gesture...</div>
+                            <button class="btn btn-audio" onclick="speakInBrowser(document.getElementById('liveTransEN').innerText, 'en')" style="margin-top: 6px; width: auto; font-size: 13px; padding: 6px 12px;">🔊 Play English Voice</button>
                         </div>
-                        <div class="trans-card hi-card">
-                            <div class="card-label">🇮🇳 Hindi:</div>
-                            <div class="card-val" id="liveTransHI">इंतजार कर रहा हूं...</div>
+
+                        <!-- Live Translate Selection Pill Buttons -->
+                        <div class="translation-selector-container" style="background: rgba(17, 24, 45, 0.5); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase;">Translate to:</span>
+                                <div class="lang-pill-group" id="livePillGroup">
+                                    <button class="lang-pill" data-lang="hi" onclick="toggleLivePill(this, 'hi')">🇮🇳 Hindi</button>
+                                    <button class="lang-pill" data-lang="ta" onclick="toggleLivePill(this, 'ta')">🇮🇳 Tamil</button>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Live Translated Output -->
+                            <div id="liveDynamicTranslationBox" class="trans-card" style="display: none; border-top: 1px solid rgba(148,163,184,0.15); padding-top: 12px; margin-top: 4px;">
+                                <div class="card-label" id="liveDynamicLangLabel">Translated Output:</div>
+                                <div class="card-val" id="liveDynamicTransText" style="font-size: 1.4rem; color: #c4b5fd; font-weight: bold; margin-bottom: 8px;">—</div>
+                                <button id="liveDynamicSpeakBtn" class="btn btn-audio" style="width: auto; font-size: 13px; padding: 6px 14px;">🔊 Play Translated Voice</button>
+                            </div>
                         </div>
                     </div>
 

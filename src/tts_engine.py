@@ -26,7 +26,7 @@ class MultilingualTTSEngine:
             self.pyttsx_engine = None
 
     def set_language(self, lang_code):
-        if lang_code in ["en", "hi"]:
+        if lang_code in ["en", "hi", "ta"]:
             self.current_lang = lang_code
 
     def get_translated_text(self, gesture_name, lang_code=None):

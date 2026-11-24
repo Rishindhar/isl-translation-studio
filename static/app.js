@@ -4,6 +4,7 @@
 let activeInputFilename = null;
 let currentTranslationEN = "Waiting for gesture...";
 let currentTranslationHI = "इंतजार कर रहा हूं...";
+let currentTranslationTA = "சைகைக்காக காத்திருக்கிறது...";
 let videoProcessingDone = false;
 let hasShownComplete = false;
 let lastSpokenText = "";
@@ -13,7 +14,7 @@ let isSpeaking = false;
 // WEB SPEECH API — Plays audio directly in browser
 // ─────────────────────────────────────────────────
 function speakInBrowser(text, lang) {
-    if (!text || text === 'idle' || text === 'Idle') return;
+    if (!text || text === 'idle' || text === 'Idle' || text.includes('Waiting') || text.includes('இंतजार') || text.includes('காத்திருக்கிறது')) return;
     if (!window.speechSynthesis) {
         console.warn('Web Speech API not supported in this browser.');
         return;
@@ -23,14 +24,20 @@ function speakInBrowser(text, lang) {
     window.speechSynthesis.cancel();
 
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
+    if (lang === 'hi') {
+        utter.lang = 'hi-IN';
+    } else if (lang === 'ta') {
+        utter.lang = 'ta-IN';
+    } else {
+        utter.lang = 'en-US';
+    }
     utter.rate = 0.85;
     utter.pitch = 1.0;
     utter.volume = 1.0;
 
     // Pick best available voice
     const voices = window.speechSynthesis.getVoices();
-    const targetLang = lang === 'hi' ? 'hi' : 'en';
+    const targetLang = lang === 'hi' ? 'hi' : (lang === 'ta' ? 'ta' : 'en');
     const match = voices.find(v => v.lang.startsWith(targetLang));
     if (match) utter.voice = match;
 
@@ -114,17 +121,22 @@ async function startWebcam() {
         video.srcObject = webcamStream;
         await video.play();
 
-        // Size canvases to match video
-        video.onloadedmetadata = () => {
-            if (capCanvas) {
-                capCanvas.width  = video.videoWidth;
-                capCanvas.height = video.videoHeight;
+        // Size canvases to match video (run immediately and as fallback event listeners)
+        function sizeCanvases() {
+            if (video.videoWidth) {
+                if (capCanvas) {
+                    capCanvas.width  = video.videoWidth;
+                    capCanvas.height = video.videoHeight;
+                }
+                if (ovCanvas) {
+                    ovCanvas.width   = video.videoWidth;
+                    ovCanvas.height  = video.videoHeight;
+                }
             }
-            if (ovCanvas) {
-                ovCanvas.width   = video.videoWidth;
-                ovCanvas.height  = video.videoHeight;
-            }
-        };
+        }
+        sizeCanvases();
+        video.onloadedmetadata = sizeCanvases;
+        video.onloadeddata = sizeCanvases;
 
         // Show video, hide placeholder
         video.style.display = 'block';
@@ -240,12 +252,20 @@ async function captureAndProcess() {
 
         // ── Live translation preview ─────────────────────────────────
         if (data.translation_en) {
+            currentTranslationEN = data.translation_en;
             const enEl = document.getElementById('liveTransEN');
             if (enEl) enEl.innerText = data.translation_en;
         }
         if (data.translation_hi) {
-            const hiEl = document.getElementById('liveTransHI');
-            if (hiEl) hiEl.innerText = data.translation_hi;
+            currentTranslationHI = data.translation_hi;
+        }
+        if (data.translation_ta) {
+            currentTranslationTA = data.translation_ta;
+        }
+
+        // Dynamically update the target language display box if pill is active
+        if (liveActiveLang) {
+            changeLiveTargetLanguage(liveActiveLang);
         }
 
         // ── LM Next-word hints ───────────────────────────────────────
@@ -299,8 +319,56 @@ async function loadSampleVideos() {
 }
 
 function selectSampleVideo(filename) {
-    if (!filename) return;
-    activeInputFilename = filename;
+    activeInputFilename = filename || null;
+
+    // Helper to wipe the right-panel state
+    function clearResultsPanel() {
+        const textEnEl = document.getElementById('transTextEN');
+        const sb = document.getElementById('sentenceBox');
+        const lb = document.getElementById('liveSentenceBox');
+        const completeBanner = document.getElementById('videoCompleteBanner');
+        const vocabWarning = document.getElementById('vocabWarningBanner');
+        if (textEnEl) textEnEl.innerText = "Waiting for translation...";
+        if (sb) sb.innerHTML = '<span class="placeholder-text" style="font-size:0.8rem;">Recognizing ISL gestures...</span>';
+        if (lb) lb.innerHTML = '<span class="placeholder-text" style="font-size:0.8rem;">Recognizing ISL gestures...</span>';
+        if (completeBanner) completeBanner.style.display = 'none';
+        if (vocabWarning) vocabWarning.style.display = 'none';
+
+        // Reset target language pills and hide dynamic boxes
+        document.querySelectorAll('#videoPillGroup .lang-pill').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('#livePillGroup .lang-pill').forEach(p => p.classList.remove('active'));
+        videoActiveLang = "";
+        liveActiveLang = "";
+        const videoBox = document.getElementById('videoDynamicTranslationBox');
+        const liveBox = document.getElementById('liveDynamicTranslationBox');
+        if (videoBox) videoBox.style.display = 'none';
+        if (liveBox) liveBox.style.display = 'none';
+
+        currentTranslationEN = "";
+        currentTranslationHI = "";
+        currentTranslationTA = "";
+        prevSentenceLen = 0;
+        hasShownComplete = false;
+        lastSpokenText = "";
+    }
+
+    if (!filename) {
+        // Blank option selected — fully reset both panels
+        clearResultsPanel();
+        const previewPlayer = document.getElementById('inputVideoPreview');
+        const placeholder = document.getElementById('previewPlaceholder');
+        if (previewPlayer) { previewPlayer.src = ''; previewPlayer.style.display = 'none'; }
+        if (placeholder) placeholder.style.display = 'block';
+        const streamPlayer = document.getElementById('translatedStreamPlayer');
+        const streamPlaceholder = document.getElementById('streamPlaceholder');
+        if (streamPlayer) { streamPlayer.src = ''; streamPlayer.style.display = 'none'; }
+        if (streamPlaceholder) streamPlaceholder.style.display = 'block';
+        document.getElementById('uploadStatusText').innerText = '';
+        return;
+    }
+
+    // A real video was selected — clear old results and show preview
+    clearResultsPanel();
     loadInputVideoPreview(filename);
 }
 
@@ -369,15 +437,21 @@ function proceedAndTranslateVideo() {
 
     // Clear DOM elements of previous translation
     const textEnEl = document.getElementById('transTextEN');
-    const textHiEl = document.getElementById('transTextHI');
     const sb = document.getElementById('sentenceBox');
     const lb = document.getElementById('liveSentenceBox');
     if (textEnEl) textEnEl.innerText = "Waiting for translation...";
-    if (textHiEl) textHiEl.innerText = "इंतजार...";
     if (sb) sb.innerHTML = '<span class="placeholder-text" style="font-size:0.8rem;">Recognizing ISL gestures...</span>';
     if (lb) lb.innerHTML = '<span class="placeholder-text" style="font-size:0.8rem;">Recognizing ISL gestures...</span>';
+
+    // Reset target language pills and hide dynamic translation box
+    document.querySelectorAll('#videoPillGroup .lang-pill').forEach(p => p.classList.remove('active'));
+    videoActiveLang = "";
+    const videoBox = document.getElementById('videoDynamicTranslationBox');
+    if (videoBox) videoBox.style.display = 'none';
+
     currentTranslationEN = "";
     currentTranslationHI = "";
+    currentTranslationTA = "";
     prevSentenceLen = 0;
 
     const streamUrl = `/video_stream_feed?filename=${encodeURIComponent(activeInputFilename)}&lang=${selectedLang}&t=${Date.now()}`;
@@ -391,12 +465,91 @@ function proceedAndTranslateVideo() {
 // PLAY AUDIO BUTTONS — Browser Speech API
 // ─────────────────────────────────────────────────
 function playAudio(lang) {
-    const text = lang === 'en' ? currentTranslationEN : currentTranslationHI;
-    if (!text || text.includes('Waiting') || text.includes('इंतजार')) {
+    let text = currentTranslationEN;
+    if (lang === 'hi') text = currentTranslationHI;
+    if (lang === 'ta') text = currentTranslationTA;
+
+    if (!text || text.includes('Waiting') || text.includes('इंतजार') || text.includes('காத்திருக்கிறது')) {
         speakInBrowser('No translation available yet. Please process a video first.', 'en');
         return;
     }
     speakInBrowser(text, lang);
+}
+
+// Track active target language per tab
+let videoActiveLang = "";
+let liveActiveLang = "";
+
+// Toggle pill button for Pre-recorded Video tab
+function toggleVideoPill(btn, lang) {
+    const allPills = document.querySelectorAll('#videoPillGroup .lang-pill');
+    const box = document.getElementById('videoDynamicTranslationBox');
+    const label = document.getElementById('videoDynamicLangLabel');
+    const textEl = document.getElementById('videoDynamicTransText');
+    const speakBtn = document.getElementById('videoDynamicSpeakBtn');
+
+    // If already active — deactivate (toggle off)
+    if (videoActiveLang === lang) {
+        videoActiveLang = "";
+        allPills.forEach(p => p.classList.remove('active'));
+        if (box) box.style.display = 'none';
+        return;
+    }
+
+    // Activate selected pill
+    videoActiveLang = lang;
+    allPills.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+
+    if (box) box.style.display = 'block';
+    const langName = lang === 'hi' ? "🇮🇳 Hindi Translation (हिन्दी):" : "🇮🇳 Tamil Translation (தமிழ்):";
+    const translatedText = lang === 'hi' ? currentTranslationHI : currentTranslationTA;
+    if (label) label.innerText = langName;
+    if (textEl) textEl.innerText = translatedText || "—";
+    if (speakBtn) speakBtn.onclick = () => playAudio(lang);
+}
+
+// Refresh the video dynamic box without resetting active pill
+function changeVideoTargetLanguage(lang) {
+    if (!lang) return;
+    const textEl = document.getElementById('videoDynamicTransText');
+    if (textEl) textEl.innerText = lang === 'hi' ? currentTranslationHI : currentTranslationTA;
+}
+
+// Toggle pill button for Live Webcam tab
+function toggleLivePill(btn, lang) {
+    const allPills = document.querySelectorAll('#livePillGroup .lang-pill');
+    const box = document.getElementById('liveDynamicTranslationBox');
+    const label = document.getElementById('liveDynamicLangLabel');
+    const textEl = document.getElementById('liveDynamicTransText');
+    const speakBtn = document.getElementById('liveDynamicSpeakBtn');
+
+    // If already active — deactivate (toggle off)
+    if (liveActiveLang === lang) {
+        liveActiveLang = "";
+        allPills.forEach(p => p.classList.remove('active'));
+        if (box) box.style.display = 'none';
+        return;
+    }
+
+    // Activate selected pill
+    liveActiveLang = lang;
+    allPills.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+
+    if (box) box.style.display = 'block';
+    const langName = lang === 'hi' ? "🇮🇳 Hindi Translation (हिन्दी):" : "🇮🇳 Tamil Translation (தமிழ்):";
+    const translatedText = lang === 'hi' ? currentTranslationHI : currentTranslationTA;
+    if (label) label.innerText = langName;
+    if (textEl) textEl.innerText = translatedText || "—";
+    if (speakBtn) speakBtn.onclick = () => speakInBrowser(lang === 'hi' ? currentTranslationHI : currentTranslationTA, lang);
+}
+
+// Refresh the live dynamic box without resetting active pill
+function changeLiveTargetLanguage(lang) {
+    if (!lang) return;
+    const textEl = document.getElementById('liveDynamicTransText');
+    if (textEl) textEl.innerText = lang === 'hi' ? currentTranslationHI : currentTranslationTA;
 }
 
 // ─────────────────────────────────────────────────
@@ -418,8 +571,17 @@ async function updateStatus() {
         }
         if (data.translation_hi) {
             currentTranslationHI = data.translation_hi;
-            const textHiEl = document.getElementById('transTextHI');
-            if (textHiEl) textHiEl.innerText = data.translation_hi;
+        }
+        if (data.translation_ta) {
+            currentTranslationTA = data.translation_ta;
+        }
+
+        // Dynamically update target translation cards if a pill is active
+        if (videoActiveLang) {
+            changeVideoTargetLanguage(videoActiveLang);
+        }
+        if (liveActiveLang) {
+            changeLiveTargetLanguage(liveActiveLang);
         }
 
         // Sentence chips + real-time browser speech
@@ -591,6 +753,16 @@ async function recordWebcamSign() {
 
     // 3. Capture 30 frames at 15 FPS (one frame every 70ms)
     const recordedFrames = [];
+    
+    // Explicitly size canvas to active stream dimensions to avoid capturing blank 0x0 frames
+    if (video.videoWidth) {
+        capCanvas.width = video.videoWidth;
+        capCanvas.height = video.videoHeight;
+    } else {
+        capCanvas.width = 640;
+        capCanvas.height = 480;
+    }
+
     const ctx = capCanvas.getContext('2d');
     
     for (let i = 0; i < 30; i++) {

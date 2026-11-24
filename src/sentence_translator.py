@@ -298,7 +298,68 @@ _HINDI_WORD_MAP = {
     "nice": "अच्छा", "hello_bro": "नमस्ते भाई", "interview": "साक्षात्कार",
     "how_much": "कितना", "leave_preparatory_to_retirement": "सेवानिवृत्ति पूर्व अवकाश",
     "grandson": "पोता", "granddaughter": "पोती", "handkerchief": "रूमाल",
-    "gram_kilogram": "ग्राम किलोग्राम"
+    "gram_kilogram": "ग्राम किलोग्राम",
+    # Finance & Legal
+    "insurance": "बीमा", "income_tax": "आयकर", "head_of_income": "आय का शीर्ष",
+    "loud_speaker": "लाउडस्पीकर", "bank": "बैंक", "loan": "ऋण",
+    "interest": "ब्याज", "salary": "वेतन", "property": "संपत्ति",
+    "profit": "लाभ", "market": "बाज़ार", "purchase": "खरीद",
+    "account": "खाता", "tax": "कर", "budget": "बजट",
+    "cash": "नकद", "credit": "उधार", "debit": "डेबिट",
+    "cheque": "चेक", "receipt": "रसीद", "balance": "शेष",
+    "audit": "लेखापरीक्षा", "capital": "पूंजी", "deposit": "जमा",
+    "dividend": "लाभांश", "payment": "भुगतान", "loss": "हानि",
+    # Common actions & people
+    "you": "आप", "thankyou": "धन्यवाद", "victory": "जीत",
+    "touch": "छूना", "proud": "गर्व", "angry": "गुस्सा",
+    "brother": "भाई", "sister": "बहन", "king": "राजा", "queen": "रानी",
+    "police": "पुलिस", "teacher": "शिक्षक", "student": "विद्यार्थी",
+    "office": "कार्यालय", "hospital": "अस्पताल", "school": "विद्यालय",
+    "train": "रेलगाड़ी", "plane": "हवाई जहाज", "ship": "जहाज",
+    "book": "किताब", "paper": "कागज़", "pen": "कलम", "pencil": "पेंसिल",
+    "sun": "सूरज", "moon": "चाँद", "star": "तारा", "rain": "बारिश",
+    "wind": "हवा", "fire": "आग", "earth": "पृथ्वी", "sky": "आकाश",
+}
+
+# Tamil translation fallbacks for common words
+_TAMIL_WORD_MAP = {
+    "hello": "வணக்கம்", "yes": "ஆம்", "no": "இல்லை", "thank_you": "நன்றி",
+    "please": "தயவுசெய்து", "help": "உதவி", "water": "தண்ணீர்", "food": "உணவு",
+    "home": "வீடு", "school": "பள்ளி", "work": "வேலை", "go": "செல்",
+    "come": "வா", "father": "அப்பா", "mother": "அம்மா",
+    "family": "குடும்பம்", "friend": "நண்பன்", "love": "அன்பு",
+    "happy": "மகிழ்ச்சி", "sad": "சோகம்", "need": "வேண்டும்", "morning": "காலை",
+    "night": "இரவு", "day": "நாள்", "time": "நேரம்", "stop": "நில்",
+    "doctor": "மருத்துவர்", "medicine": "மருந்து", "hospital": "மருத்துவமனை",
+    "money": "பணம்", "bus": "பேருந்து", "train": "இரயில்", "car": "கார்",
+    "read": "படி", "write": "எழுது", "learn": "கற்றுக்கொள்", "teacher": "ஆசிரியர்",
+    "student": "மாணவர்", "sorry": "மன்னிக்கவும்", "good": "நல்லது",
+    "name": "பெயர்", "what": "என்ன", "where": "எங்கே", "how": "எப்படி",
+    "i": "நான்", "me": "எனக்கு", "my": "எனது", "we": "நாங்கள்",
+    "hug": "அணைப்பு", "little": "கொஞ்சம்", "above": "மேலே", "below": "கீழே",
+    "nice": "அருமை", "hello_bro": "வணக்கம் சகோ", "interview": "நேர்காணல்",
+    "how_much": "எவ்வளவு", "leave_preparatory_to_retirement": "ஓய்வு பெற ஆயத்த விடுப்பு",
+    "grandson": "பேரன்", "granddaughter": "பேத்தி", "handkerchief": "கைக்குட்டை",
+    "gram_kilogram": "கிராம் கிலோகிராம்",
+    # Finance & Legal
+    "insurance": "காப்பீடு", "income_tax": "வருமான வரி", "head_of_income": "வருமான தலைப்பு",
+    "loud_speaker": "ஒலிபெருக்கி", "bank": "வங்கி", "loan": "கடன்",
+    "interest": "வட்டி", "salary": "சம்பளம்", "property": "சொத்து",
+    "profit": "லாபம்", "market": "சந்தை", "purchase": "வாங்கல்",
+    "account": "கணக்கு", "tax": "வரி", "budget": "பட்ஜெட்",
+    "cash": "பணம்", "credit": "கடன்", "debit": "பற்று",
+    "cheque": "காசோலை", "receipt": "ரசீது", "balance": "இருப்பு",
+    "audit": "தணிக்கை", "capital": "மூலதனம்", "deposit": "வைப்பு",
+    "dividend": "ஈவுத்தொகை", "payment": "கட்டணம்", "loss": "நஷ்டம்",
+    # Common actions & people
+    "you": "நீங்கள்", "thankyou": "நன்றி", "victory": "வெற்றி",
+    "touch": "தொடு", "proud": "பெருமை", "angry": "கோபம்",
+    "brother": "அண்ணன்", "sister": "அக்கா", "king": "அரசன்", "queen": "அரசி",
+    "police": "காவல்துறை", "office": "அலுவலகம்",
+    "plane": "விமானம்", "ship": "கப்பல்",
+    "book": "புத்தகம்", "paper": "காகிதம்", "pen": "பேனா", "pencil": "பென்சில்",
+    "sun": "சூரியன்", "moon": "நிலவு", "star": "நட்சத்திரம்", "rain": "மழை",
+    "wind": "காற்று", "fire": "நெருப்பு", "earth": "பூமி", "sky": "வானம்",
 }
 
 
@@ -379,6 +440,72 @@ def _build_hindi_sentence(words):
     return " ".join(translated) + "।"
 
 
+_TAMIL_SENTENCE_MAP = {
+    ("hello",): "வணக்கம்!",
+    ("namaste",): "வணக்கம்!",
+    ("welcome",): "வரவேற்கிறோம்!",
+    ("thank_you",): "நன்றி!",
+    ("sorry",): "மன்னிக்கவும்.",
+    ("goodbye",): "சென்று வருகிறேன்!",
+    ("please",): "தயவுசெய்து.",
+    ("yes",): "ஆம்!",
+    ("no",): "இல்லை.",
+    ("help",): "உதவி!",
+
+    ("hello", "thank_you"): "வணக்கம், நன்றி!",
+    ("hello", "thank_you", "yes"): "வணக்கம், நன்றி, ஆம்!",
+    ("hello", "how", "you"): "வணக்கம், நீங்கள் எப்படி இருக்கிறீர்கள்?",
+    ("hello", "good", "morning"): "வணக்கம், காலை வணக்கம்!",
+    ("thank_you", "help"): "உங்கள் உதவிக்கு நன்றி.",
+    ("good", "morning"): "காலை வணக்கம்! இந்நாள் இனிய நாளாக அமையட்டும்.",
+    ("good", "night"): "இரவு வணக்கம், இனிய கனவுகள்.",
+    ("please", "help"): "தயவுசெய்து எனக்கு உதவுங்கள்.",
+    ("please", "water"): "தயவுசெய்து எனக்கு தண்ணீர் கொடுங்கள்.",
+    ("please", "food"): "தயவுசெய்து எனக்கு உணவு கொடுங்கள்.",
+    ("sorry", "late"): "தாமதத்திற்கு மன்னிக்கவும்.",
+    ("good", "job"): "அருமையான வேலை! வாழ்த்துக்கள்.",
+
+    ("need", "water"): "எனக்கு தண்ணீர் வேண்டும்.",
+    ("need", "food"): "எனக்கு உணவு வேண்டும்.",
+    ("need", "help"): "எனக்கு உதவி தேவை!",
+    ("need", "medicine"): "எனக்கு மருந்து தேவை.",
+    ("need", "doctor"): "நான் மருத்துவரை பார்க்க வேண்டும்.",
+
+    ("i", "love", "family"): "நான் எனது குடும்பத்தை நேசிக்கிறேன்.",
+    ("go", "home"): "நான் வீட்டிற்கு செல்ல விரும்புகிறேன்.",
+    ("father", "home"): "அப்பா வீட்டில் இருக்கிறார்.",
+    ("mother", "home"): "அம்மா வீட்டில் இருக்கிறார்.",
+    ("friend", "good"): "நீங்கள் ஒரு நல்ல நண்பர்.",
+}
+
+
+def _build_tamil_sentence(words):
+    """
+    Smart Tamil sentence builder using word fallbacks.
+    """
+    if not words:
+        return "சைகை எதுவும் கண்டறியப்படவில்லை."
+
+    translated = []
+    for w in words:
+        if w in _TAMIL_WORD_MAP:
+            translated.append(_TAMIL_WORD_MAP[w])
+        else:
+            try:
+                from src.config import GESTURE_TRANSLATIONS
+                if w in GESTURE_TRANSLATIONS and "ta" in GESTURE_TRANSLATIONS[w]:
+                    translated.append(GESTURE_TRANSLATIONS[w]["ta"])
+                    continue
+            except ImportError:
+                pass
+            translated.append(w.replace("_", " "))
+
+    if len(translated) == 1:
+        return f"{translated[0]}."
+
+    return " ".join(translated) + "."
+
+
 # ─────────────────────────────────────────────────────────────
 # MAIN TRANSLATION FUNCTION
 # ─────────────────────────────────────────────────────────────
@@ -386,23 +513,40 @@ def _build_hindi_sentence(words):
 def translate_isl_sequence(words_list, lang="en"):
     """
     Takes a list of recognized ISL gesture words and converts them into a
-    fluent, grammatically correct sentence in English or Hindi.
-
-    Steps:
-      1. Exact match in ISL_SENTENCE_DICTIONARY
-      2. Longest n-gram sub-sequence match
-      3. Smart NLP grammar fallback
+    fluent, grammatically correct sentence in English, Hindi, or Tamil.
     """
     if not words_list:
-        return "Waiting for ISL gesture sequence..." if lang == "en" else "इंतजार कर रहा हूं..."
+        if lang == "en":
+            return "Waiting for ISL gesture sequence..."
+        elif lang == "hi":
+            return "इंतजार कर रहा हूं..."
+        else:
+            return "சைகைக்காக காத்திருக்கிறது..."
 
     clean_words = [_normalize(w) for w in words_list if _normalize(w) not in ("idle", "")]
     if not clean_words:
-        return "Waiting for ISL gesture sequence..." if lang == "en" else "इंतजार कर रहा हूं..."
+        if lang == "en":
+            return "Waiting for ISL gesture sequence..."
+        elif lang == "hi":
+            return "इंतजार कर रहा हूं..."
+        else:
+            return "சைகைக்காக காத்திருக்கிறது..."
+
+    # Helper to get Tamil translation from maps
+    def get_ta_translation(words_tuple):
+        if words_tuple in _TAMIL_SENTENCE_MAP:
+            return _TAMIL_SENTENCE_MAP[words_tuple]
+        if words_tuple in ISL_SENTENCE_DICTIONARY and "ta" in ISL_SENTENCE_DICTIONARY[words_tuple]:
+            return ISL_SENTENCE_DICTIONARY[words_tuple]["ta"]
+        return None
 
     # 1. Exact match
     tuple_key = tuple(clean_words)
-    if tuple_key in ISL_SENTENCE_DICTIONARY:
+    if lang == "ta":
+        exact_ta = get_ta_translation(tuple_key)
+        if exact_ta:
+            return exact_ta
+    elif tuple_key in ISL_SENTENCE_DICTIONARY and lang in ISL_SENTENCE_DICTIONARY[tuple_key]:
         return ISL_SENTENCE_DICTIONARY[tuple_key][lang]
 
     # 2. Longest sub-sequence match
@@ -412,7 +556,14 @@ def translate_isl_sequence(words_list, lang="en"):
     for length in range(len(clean_words), 0, -1):
         for start in range(len(clean_words) - length + 1):
             sub_tuple = tuple(clean_words[start:start + length])
-            if sub_tuple in ISL_SENTENCE_DICTIONARY:
+            if lang == "ta":
+                match_ta = get_ta_translation(sub_tuple)
+                if match_ta:
+                    if length > best_len:
+                        best_match = match_ta
+                        best_start = start
+                        best_len = length
+            elif sub_tuple in ISL_SENTENCE_DICTIONARY and lang in ISL_SENTENCE_DICTIONARY[sub_tuple]:
                 if length > best_len:
                     best_match = ISL_SENTENCE_DICTIONARY[sub_tuple][lang]
                     best_start = start
@@ -422,15 +573,24 @@ def translate_isl_sequence(words_list, lang="en"):
         leftover = [clean_words[i] for i in range(len(clean_words))
                     if i < best_start or i >= best_start + best_len]
         if leftover:
-            extra = ", ".join(w.replace("_", " ").title() for w in leftover)
-            return f"{best_match} ({extra})"
+            if lang == "ta":
+                extra = ", ".join(_TAMIL_WORD_MAP.get(w, w.replace("_", " ")) for w in leftover)
+                return f"{best_match} ({extra})"
+            elif lang == "hi":
+                extra = ", ".join(_HINDI_WORD_MAP.get(w, w.replace("_", " ")) for w in leftover)
+                return f"{best_match} ({extra})"
+            else:
+                extra = ", ".join(w.replace("_", " ").title() for w in leftover)
+                return f"{best_match} ({extra})"
         return best_match
 
     # 3. Smart NLP grammar fallback
     if lang == "en":
         return _build_english_sentence(clean_words)
-    else:
+    elif lang == "hi":
         return _build_hindi_sentence(clean_words)
+    else:
+        return _build_tamil_sentence(clean_words)
 
 
 def close_sentence(words_list, lang="en"):
